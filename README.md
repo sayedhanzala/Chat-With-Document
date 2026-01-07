@@ -32,17 +32,6 @@ The system is fully local, uses no external APIs, has no rate limits, and perfor
 
 ---
 
-## Project Structure
-
-simple-rag/
-│
-├── app.py
-├── main.py
-├── requirements.txt
-└── README.md
-
----
-
 ## Prerequisites
 
 - Python 3.9 or higher
@@ -53,67 +42,68 @@ simple-rag/
 
 ## Setup Instructions
 
-### 1. Clone the Repository
+### 1. Code Setup
 
+```bash
 git clone https://github.com/sayedhanzala/Chat-With-Document.git
 cd Chat-With-Document
 
----
-
-### 2. Create and Activate Virtual Environment
-
-Windows:
+## Windows:
 python -m venv venv
 venv\Scripts\activate
 
-Linux / macOS:
+## Linux / macOS:
 python3 -m venv venv
 source venv/bin/activate
 
----
-
-### 3. Install Dependencies
-
 pip install -r requirements.txt
+```
 
 ---
 
-## Ollama Setup
+### 2. Ollama Setup
 
-### 4. Install Ollama
-
-Download and install Ollama from:
+```bash
+## Download and install Ollama from:
 https://ollama.com
 
-Restart the terminal after installation.
+### Restart the terminal after installation.
 
-Verify installation:
+## Verify installation:
 ollama --version
+```
+
 
 ---
 
-### 5. Download Required Model
+### 3. Download Required Model
 
-This project uses the Phi-3 model.
+```bash
+## This project uses the Phi-3 model.
 
 ollama pull phi3
 
-Verify:
+## Verify:
 ollama list
+```
 
 ---
 
-### 6. Optional Manual Test
+### 4. Optional Manual Test
 
+```bash
 ollama run phi3
-
+```
 Type a simple prompt to confirm it works, then exit with /bye.
 
 ---
 
 ## Running the Application
-
+```bash
 streamlit run app.py
+```
+
+---
 
 The application will open in your default browser.
 
