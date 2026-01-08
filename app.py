@@ -1,13 +1,12 @@
 import streamlit as st
 from main import *
-import time
 
 if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
 st.title("Chat With Your Document")
 
-uploaded_file = st.file_uploader("Upload a PDF", type=["pdf"])
+uploaded_file = st.file_uploader("Upload a PDF or Word File", type=["pdf", "docx"])
 
 if uploaded_file:
     # with open("temp.pdf", "wb") as f:

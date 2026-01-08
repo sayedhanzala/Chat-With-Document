@@ -1,4 +1,4 @@
-from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import PyPDFLoader, Docx2txtLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_community.vectorstores import FAISS
@@ -7,13 +7,23 @@ from langchain_classic.chains import create_retrieval_chain
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_classic.chains.combine_documents import create_stuff_documents_chain
 import tempfile
+import os
 
 
 def load_document(file):
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
+    suffix = os.path.splitext(file.name)[-1].lower()
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
         tmp.write(file.read())
         tmp_path = tmp.name
-    loader = PyPDFLoader(tmp_path)
+
+    if suffix == ".pdf":
+        loader = PyPDFLoader(tmp_path)
+    elif suffix == ".docx":
+        loader = Docx2txtLoader(tmp_path)
+    else:
+        raise ValueError("Unsupported file type")
+
     documents = loader.load()
     return documents
 

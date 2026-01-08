@@ -10,7 +10,7 @@ The system is fully local, uses no external APIs, has no rate limits, and perfor
 
 ## Key Features
 
-- Upload PDF documents
+- Upload PDF/Word documents
 - Semantic chunking and retrieval
 - Answers grounded strictly in document context
 - Local LLM inference using Ollama
@@ -30,6 +30,17 @@ The system is fully local, uses no external APIs, has no rate limits, and perfor
 - Ollama (local LLM runtime)
 - Phi-3 (local LLM)
 
+---
+
+## Project Structure
+```
+Chat-With-Document/
+│
+├── app.py
+├── main.py
+├── requirements.txt
+└── README.md
+```
 ---
 
 ## Prerequisites
@@ -111,7 +122,7 @@ The application will open in your default browser.
 
 ## How to Use
 
-1. Upload a PDF document
+1. Upload a PDF/Word document
 2. Enter a question in the text area
 3. Submit the question
 4. View the generated answer
