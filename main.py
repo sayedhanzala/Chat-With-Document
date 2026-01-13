@@ -1,75 +1,64 @@
-from langchain_community.document_loaders import PyPDFLoader, Docx2txtLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_huggingface import HuggingFaceEmbeddings
-from langchain_community.vectorstores import FAISS
-from langchain_ollama import ChatOllama
-from langchain_classic.chains import create_retrieval_chain
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_classic.chains.combine_documents import create_stuff_documents_chain
+from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi.concurrency import run_in_threadpool
+from pydantic import BaseModel
 import tempfile
 import os
 
+from index import *
 
-def load_document(file):
-    suffix = os.path.splitext(file.name)[-1].lower()
+app = FastAPI(title="Chat With Document")
 
+# Global RAG state (single document for now)
+rag_chain = None
+
+
+class QuestionRequest(BaseModel):
+    question: str
+
+
+class AnswerResponse(BaseModel):
+    answer: str
+
+
+@app.post("/upload")
+async def upload_document(file: UploadFile = File(...)):
+    global rag_chain
+
+    suffix = os.path.splitext(file.filename)[-1].lower()
+    if suffix not in [".pdf", ".docx"]:
+        raise HTTPException(
+            status_code=400, detail="Only PDF and DOCX files are supported"
+        )
+
+    # Save uploaded file to temp path
     with tempfile.NamedTemporaryFile(delete=False, suffix=suffix) as tmp:
-        tmp.write(file.read())
+        content = await file.read()
+        tmp.write(content)
         tmp_path = tmp.name
 
-    if suffix == ".pdf":
-        loader = PyPDFLoader(tmp_path)
-    elif suffix == ".docx":
-        loader = Docx2txtLoader(tmp_path)
-    else:
-        raise ValueError("Unsupported file type")
+    try:
+        documents = await run_in_threadpool(load_document, tmp_path)
+        chunks = await run_in_threadpool(chunk_doc, documents)
+        embeddings = create_embeddings()
+        vector_db = await run_in_threadpool(store_embeddings, chunks, embeddings)
 
-    documents = loader.load()
-    return documents
+        # Build RAG chain ONCE
+        rag_chain = build_rag_chain(vector_db)
 
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-def chunk_doc(docs):
-    splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=100)
-    chunks = splitter.split_documents(docs)
-    return chunks
+    finally:
+        os.remove(tmp_path)
 
-
-def create_embeddings():
-    embeddings = HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
-    )
-    return embeddings
+    return {"status": "success", "message": "Document uploaded & indexed"}
 
 
-def store_embeddings(chunks, embeddings):
-    vector_db = FAISS.from_documents(chunks, embeddings)
-    return vector_db
+@app.post("/ask", response_model=AnswerResponse)
+async def ask_question(payload: QuestionRequest):
+    if rag_chain is None:
+        raise HTTPException(status_code=400, detail="No document uploaded yet")
 
+    answer = await run_in_threadpool(ask_qna, rag_chain, payload.question)
 
-def retriever(vector):
-    retriever = vector.as_retriever(search_kwargs={"k": 3})
-    return retriever
-
-
-def rag_chain(retriever):
-    llm = ChatOllama(temperature=0, model="phi3")
-
-    prompt = ChatPromptTemplate.from_template("""
-    Answer the question using only the context below.
-    If the answer is not present, say "I don't know".
-
-    Context:
-    {context}
-
-    Question:
-    {input}
-    """)
-
-    document_chain = create_stuff_documents_chain(llm, prompt)
-    qa_chain = create_retrieval_chain(retriever, document_chain)
-
-    return qa_chain
-
-def ask_qna(qa_chain, question):
-    response = qa_chain.invoke({"input": question})
-    return response["answer"]
+    return {"answer": answer}

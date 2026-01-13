@@ -109,7 +109,7 @@ Type a simple prompt to confirm it works, then exit with /bye.
 
 ---
 
-## Running the Application
+## Running the Application - Streamlit
 ```bash
 streamlit run app.py
 ```
@@ -117,6 +117,23 @@ streamlit run app.py
 ---
 
 The application will open in your default browser.
+
+---
+
+## Running the Application - FastAPI
+```bash
+uvicorn main:app --reload --port 8000
+```
+
+---
+
+Open the following URL in your browser: http://127.0.0.1:8000/docs.
+
+This page allows you to:
+- Upload documents
+- Ask questions
+- Inspect request and response schemas
+- Test endpoints interactively
 
 ---
 
@@ -129,6 +146,37 @@ The application will open in your default browser.
 5. Ask follow-up questions (chat history preserved)
 
 All answers are generated strictly from the uploaded document.
+
+---
+
+## API Endpoints
+
+### 1. Upload Documents
+
+Endpoint
+
+```bash
+POST /upload
+```
+Uploads and indexes a PDF or DOCX document, This must be called before asking any questions.
+
+### 2. Ask Question
+
+Endpoint
+
+```bash
+POST /ask
+```
+Asks a question based on the uploaded document, The answer is generated strictly from the document content.
+
+---
+
+## Important Notes for FastAPI Usage
+
+- Only one document is indexed at a time (current design)
+- Uploading a new document replaces the previous index
+- Embeddings and vector store are kept in memory
+- The FastAPI backend is fully local and API-free
 
 ---
 
